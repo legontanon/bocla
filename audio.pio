@@ -1,0 +1,49 @@
+; =============================================================================
+; 1. I2S AUDIO (16-bit Stereo)
+; =============================================================================
+; Pins: Side-set Base = 26 (Bit 0=BCLK, Bit 1=LRC)
+;       Out Base      = 28 (DIN)
+; Shift: Left (MSB First)
+; Freq: 44100 * 32 * 2 (approx 2.822 MHz)
+
+.program i2s_out
+.side_set 2
+
+                    ; Side: Bit 1 (LRC), Bit 0 (BCLK)
+                    ; 00=L/L, 01=L/H, 10=H/L, 11=H/H
+
+    set x, 14       side 0b01   ; Setup: LRC=0 (Left), BCLK=1
+left_loop:
+    out pins, 1     side 0b00   ; Data Out, BCLK=0
+    jmp x-- left_loop side 0b01 ; Loop, BCLK=1
+    out pins, 1     side 0b10   ; Last bit Left, LRC=1 (Transition to Right)
+    
+    set x, 14       side 0b11   ; Setup: LRC=1 (Right), BCLK=1
+right_loop:
+    out pins, 1     side 0b10   ; Data Out, BCLK=0, LRC=1
+    jmp x-- right_loop side 0b11; Loop, BCLK=1
+    out pins, 1     side 0b00   ; Last bit Right, LRC=0 (Transition to Left)
+
+% c-sdk {
+static inline void i2s_out_program_init(PIO pio, uint sm, uint offset, uint data_pin, uint clock_pin_base) {
+    pio_sm_config c = i2s_out_program_get_default_config(offset);
+    
+    // Configure pins
+    sm_config_set_out_pins(&c, data_pin, 1);
+    sm_config_set_sideset_pins(&c, clock_pin_base);
+    
+    pio_gpio_init(pio, data_pin);
+    pio_gpio_init(pio, clock_pin_base);
+    pio_gpio_init(pio, clock_pin_base + 1);
+    
+    pio_sm_set_consecutive_pindirs(pio, sm, data_pin, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, sm, clock_pin_base, 2, true);
+    
+    // Audio configuration: 32 clocks per frame, Left Shift
+    sm_config_set_out_shift(&c, false, true, 32);
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+    
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}

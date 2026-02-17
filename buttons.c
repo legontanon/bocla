@@ -1,6 +1,7 @@
 #include "buttons.h"
 #include "pico/stdlib.h"
 #include "hardware/irq.h"
+#include "buttons.pio.h"
 
 // --- Config ---
 #define CHORD_WINDOW_MS 60  // Window to wait for other buttons to join
@@ -18,28 +19,6 @@ static struct {
     // Callback Table (Index = Mask)
     button_action_t actions[BUTTON_COMBOS]; 
 } btn_ctx;
-
-// --- PIO Program: Push on Change (5 pins) ---
-// Only pushes to FIFO if the state differs from the last pushed state.
-static const uint16_t buttons_program_instructions[] = {
-    // .wrap_target
-    0x4005, //  0: in     pins, 5         
-    0x4045, //  1: in     y, 5            ; Read previous state (stashed in Y)
-    0xa022, //  2: mov    x, isr          ; Copy current state to X
-    0x00a5, //  3: jmp    x != y, 5       ; If X != Y (changed), jump to push
-    0xa042, //  4: mov    y, x            ; Update Y (stashed state)
-    0x0000, //  5: jmp    0               ; Loop back to start
-    // Push Label:
-    0x8020, //  6: push   block           ; Push ISR to FIFO
-    0xa042, //  7: mov    y, x            ; Update Y
-    // .wrap
-};
-
-static const struct pio_program buttons_program = {
-    .instructions = buttons_program_instructions,
-    .length = 8,
-    .origin = -1,
-};
 
 // --- Chord Resolution Timer ---
 static int64_t chord_timeout_cb(alarm_id_t id, void *user_data) {
@@ -122,10 +101,10 @@ void buttons_init(PIO pio, uint sm, uint base_pin) {
     btn_ctx.gating = false;
 
     // 1. Load PIO Program
-    uint offset = pio_add_program(pio, &buttons_program);
+    uint offset = pio_add_program(pio, &button_input_program);
 
     // 2. Configure State Machine
-    pio_sm_config c = pio_get_default_sm_config();
+    pio_sm_config c = button_input_program_get_default_config(offset);
     
     // Map 5 pins to IN
     sm_config_set_in_pins(&c, base_pin);
@@ -138,7 +117,7 @@ void buttons_init(PIO pio, uint sm, uint base_pin) {
     }
     pio_sm_set_consecutive_pindirs(pio, sm, base_pin, 5, false);
 
-    // Shifting: Right, Autopush OFF (We push manually on change)
+    // Shifting: Right, Autopush OFF (PIO program does explicit push)
     sm_config_set_in_shift(&c, false, false, 32);
     
     // Clock Divider: Slow it down to filter glitchy mechanical noise (simple debounce)

@@ -44,6 +44,10 @@ add_executable(bocla
     ble_manager.c
 )
 
+pico_generate_pio_header(bocla ${CMAKE_CURRENT_LIST_DIR}/audio.pio)
+pico_generate_pio_header(bocla ${CMAKE_CURRENT_LIST_DIR}/led.pio)
+pico_generate_pio_header(bocla ${CMAKE_CURRENT_LIST_DIR}/buttons.pio)
+
 pico_set_program_name(bocla "bocla")
 pico_set_program_version(bocla "0.1")
 

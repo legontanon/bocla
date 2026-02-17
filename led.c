@@ -1,7 +1,8 @@
 #include "led.h"
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
-#include "peripherals.pio.h" 
+#include "hardware/clocks.h"
+#include "led.pio.h"
 
 static ws2811_t led_driver;
 
@@ -38,9 +39,8 @@ ws2811_t *ws2811_bind(PIO pio, uint sm, uint pin, volatile uint32_t *color_ptr) 
     led_driver.sm = sm;
     led_driver.color_ptr = color_ptr;
 
-    // Assumes program loaded in main.c or peripherals.pio.h defaults
-    // If you need to re-init the pins/config here, do so.
-    // ws2811_program_init(pio, sm, offset, pin, 800000);
+    uint offset = pio_add_program(pio, &ws2811_program);
+    ws2811_program_init(pio, sm, offset, pin, 800000.0f);
 
     // Start 50ms watchdog
     if (!add_repeating_timer_ms(-50, ws2811_timer_callback, &led_driver, &led_driver.timer)) {
