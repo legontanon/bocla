@@ -33,43 +33,110 @@ project(bocla C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-# Add executable
-add_executable(bocla
-    bocla.c
-    audio.c
-    buttons.c
-    led.c
-    usb_manager.c
-    usb_descriptors.c
-    ble_manager.c
-)
+# Shared include paths
+set(BOCLA_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-pico_generate_pio_header(bocla ${CMAKE_CURRENT_LIST_DIR}/audio.pio)
-pico_generate_pio_header(bocla ${CMAKE_CURRENT_LIST_DIR}/led.pio)
-pico_generate_pio_header(bocla ${CMAKE_CURRENT_LIST_DIR}/buttons.pio)
-
-pico_set_program_name(bocla "bocla")
-pico_set_program_version(bocla "0.1")
-
-# Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(bocla 0)
-pico_enable_stdio_usb(bocla 0)
-
-# Add include paths
-target_include_directories(bocla PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}
-)
-
-# Link dependencies
-target_link_libraries(bocla
+# Shared modules
+add_library(bocla_audio audio.c)
+target_include_directories(bocla_audio PUBLIC ${BOCLA_INCLUDE_DIR})
+target_link_libraries(bocla_audio PUBLIC
     pico_stdlib
     hardware_pio
     hardware_dma
     hardware_irq
     hardware_clocks
+    hardware_sync
+)
+pico_generate_pio_header(bocla_audio ${CMAKE_CURRENT_LIST_DIR}/audio.pio)
+
+add_library(bocla_buttons buttons.c)
+target_include_directories(bocla_buttons PUBLIC ${BOCLA_INCLUDE_DIR})
+target_link_libraries(bocla_buttons PUBLIC
+    pico_stdlib
+    hardware_pio
+    hardware_irq
+)
+pico_generate_pio_header(bocla_buttons ${CMAKE_CURRENT_LIST_DIR}/buttons.pio)
+
+add_library(bocla_led led.c)
+target_include_directories(bocla_led PUBLIC ${BOCLA_INCLUDE_DIR})
+target_link_libraries(bocla_led PUBLIC
+    pico_stdlib
+    hardware_pio
+    hardware_clocks
+)
+pico_generate_pio_header(bocla_led ${CMAKE_CURRENT_LIST_DIR}/led.pio)
+
+add_library(bocla_synth synth.c)
+target_include_directories(bocla_synth PUBLIC ${BOCLA_INCLUDE_DIR})
+
+add_library(bocla_usb usb_manager.c usb_descriptors.c)
+target_include_directories(bocla_usb PUBLIC ${BOCLA_INCLUDE_DIR})
+target_link_libraries(bocla_usb PUBLIC
+    bocla_audio
+    pico_stdlib
     tinyusb_device
     tinyusb_board
 )
 
+# Main firmware
+add_executable(bocla
+    bocla.c
+    ble_manager.c
+)
+
+pico_set_program_name(bocla "bocla")
+pico_set_program_version(bocla "0.1")
+pico_enable_stdio_uart(bocla 0)
+pico_enable_stdio_usb(bocla 0)
+
+target_include_directories(bocla PRIVATE ${BOCLA_INCLUDE_DIR})
+target_link_libraries(bocla
+    bocla_audio
+    bocla_buttons
+    bocla_led
+    bocla_usb
+    pico_multicore
+)
+
 pico_add_extra_outputs(bocla)
+
+# Test targets
+add_executable(test_led test_led.c)
+pico_set_program_name(test_led "test_led")
+pico_set_program_version(test_led "0.1")
+pico_enable_stdio_uart(test_led 0)
+pico_enable_stdio_usb(test_led 0)
+target_include_directories(test_led PRIVATE ${BOCLA_INCLUDE_DIR})
+target_link_libraries(test_led
+    bocla_led
+)
+pico_add_extra_outputs(test_led)
+
+add_executable(test_button test_button.c)
+pico_set_program_name(test_button "test_button")
+pico_set_program_version(test_button "0.1")
+pico_enable_stdio_uart(test_button 0)
+pico_enable_stdio_usb(test_button 0)
+target_include_directories(test_button PRIVATE ${BOCLA_INCLUDE_DIR})
+target_link_libraries(test_button
+    bocla_buttons
+    bocla_led
+)
+pico_add_extra_outputs(test_button)
+
+add_executable(test_audio test_audio.c)
+pico_set_program_name(test_audio "test_audio")
+pico_set_program_version(test_audio "0.1")
+pico_enable_stdio_uart(test_audio 0)
+pico_enable_stdio_usb(test_audio 0)
+target_include_directories(test_audio PRIVATE ${BOCLA_INCLUDE_DIR})
+target_link_libraries(test_audio
+    bocla_audio
+    bocla_buttons
+    bocla_led
+    bocla_synth
+    m
+)
+pico_add_extra_outputs(test_audio)
 

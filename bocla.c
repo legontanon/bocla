@@ -62,9 +62,6 @@ void init()
     // but standard 125MHz usually works for 48kHz.
     set_sys_clock_khz(133000, true);
     stdio_init_all();
-    usb_manager_task();
-    tight_loop_contents();
-    // 2. Init Subsystems
 
     // LED (PIO1, SM0)
     // Blue defaults to "Idle/Boot"
@@ -103,9 +100,6 @@ void main_core1()
     // Core 1 handles real-time tasks: Audio and Buttons
     while (1)
     {
-        // Audio and Button processing is interrupt-driven via PIO,
-        // so Core 1 can be mostly idle or handle other background tasks if needed.
-        // For now, just a tight loop to keep it alive.
         tight_loop_contents();
     }
 }
