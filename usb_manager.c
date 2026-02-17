@@ -23,6 +23,8 @@ void usb_manager_task(void) {
 // --- HID: Volume Control ---
 
 void usb_send_volume(int8_t dir) {
+    (void)dir;
+#if CFG_TUD_HID
     // TinyUSB HID generic check
     if (!tud_hid_ready()) return;
 
@@ -41,18 +43,23 @@ void usb_send_volume(int8_t dir) {
     // Send Release (State 0) immediately
     cmd = 0;
     tud_hid_report(0, &cmd, sizeof(cmd));
+#endif
 }
 
 // --- Audio: Receive Path ---
 
 // Standard ISO RX Callback
-void tud_audio_rx_done_pre_read_cb(uint8_t rhport, uint16_t n_bytes, uint8_t ep_out) {
-    (void) rhport; (void) ep_out;
+#if CFG_TUD_AUDIO && CFG_TUD_AUDIO_ENABLE_EP_OUT
+bool tud_audio_rx_done_pre_read_cb(uint8_t rhport, uint16_t n_bytes, uint8_t func_id, uint8_t ep_out, uint8_t cur_alt_setting) {
+    (void) rhport;
+    (void) func_id;
+    (void) ep_out;
+    (void) cur_alt_setting;
 
     if (n_bytes > MAX_PACKET_SIZE) {
         // Discard overshoot (should not happen with compliant host)
         tud_audio_read(frame_pool[pool_idx], n_bytes); 
-        return;
+        return true;
     }
 
     // 1. Read into the current pool slot
@@ -72,6 +79,8 @@ void tud_audio_rx_done_pre_read_cb(uint8_t rhport, uint16_t n_bytes, uint8_t ep_
         // Queue full: Drop packet. 
         // We reuse the current slot for the next incoming packet.
     }
+
+    return true;
 }
 
 // Stub for required set request callback
@@ -79,3 +88,4 @@ bool tud_audio_set_req_ep_cb(uint8_t rhport, tusb_control_request_t const * p_re
     (void) rhport; (void) p_request; (void) pBuff;
     return true; 
 }
+#endif

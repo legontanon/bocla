@@ -39,6 +39,9 @@ add_executable(bocla
     audio.c
     buttons.c
     led.c
+    usb_manager.c
+    usb_descriptors.c
+    ble_manager.c
 )
 
 pico_set_program_name(bocla "bocla")
@@ -60,6 +63,8 @@ target_link_libraries(bocla
     hardware_dma
     hardware_irq
     hardware_clocks
+    tinyusb_device
+    tinyusb_board
 )
 
 pico_add_extra_outputs(bocla)

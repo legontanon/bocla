@@ -125,7 +125,7 @@ void buttons_init(PIO pio, uint sm, uint base_pin) {
     uint offset = pio_add_program(pio, &buttons_program);
 
     // 2. Configure State Machine
-    pio_sm_config c = pio_get_default_sm_config(&buttons_program);
+    pio_sm_config c = pio_get_default_sm_config();
     
     // Map 5 pins to IN
     sm_config_set_in_pins(&c, base_pin);

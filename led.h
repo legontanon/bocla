@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "hardware/pio.h"
+#include "pico/time.h"
 
 // Your color pointer target. 
 // Format: 0x00RRGGBB (Standard Hex)
