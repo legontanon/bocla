@@ -20,11 +20,14 @@ int main()
 
     printf("LED Driver Started. Using API.\n");
 
+    ws2811_set(&led_color, 255, 255, 255); // White
+    sleep_ms(1000);
+
     uint8_t hue = 0;
     while (1)
     {
         // Cycle hue, Saturation 255, Value 128 (50% brightness)
-        update_hsv(hue++, 255, 128);
+        ws2811_set_hsv(&led_color, hue++, 255, 128);
 
         // 20ms update = 50Hz refresh
         sleep_ms(20);
