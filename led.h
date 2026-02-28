@@ -1,6 +1,8 @@
 #ifndef WS2811_H
 #define WS2811_H
 
+#include "cfg.h"
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "hardware/pio.h"
@@ -31,7 +33,7 @@ ws2811_t *ws2811_bind(PIO pio, uint sm, uint pin, volatile uint32_t *color_ptr);
 // --- Color Manipulation Helpers ---
 
 // Converts HSV to RGB and updates led_color using the ws2811_set API
-void ws2811_set_hsv(uint32_t *led_color, uint8_t h, uint8_t s, uint8_t v);
+void ws2811_set_hsv(volatile uint32_t *led_color, uint8_t h, uint8_t s, uint8_t v);
 
 // --- State Manipulation Helpers ---
 
@@ -74,5 +76,13 @@ static inline void ws2811_inc(volatile uint32_t *addr, int16_t dr, int16_t dg, i
 
     *addr = ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
 }
+
+#ifndef WS2811_PIO_PROGRAM
+#define WS2811_PIO_PROGRAM 1
+#endif
+
+#ifndef WS2811_PIO_SM
+#define WS2811_PIO_SM 0
+#endif
 
 #endif

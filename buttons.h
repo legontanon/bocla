@@ -1,6 +1,8 @@
 #ifndef BUTTONS_H
 #define BUTTONS_H
 
+#include "cfg.h"
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "hardware/pio.h"
@@ -10,7 +12,8 @@
 
 typedef void (*button_cb_t)(void *user_data);
 
-typedef struct {
+typedef struct
+{
     button_cb_t cb;
     void *user_data;
 } button_action_t;

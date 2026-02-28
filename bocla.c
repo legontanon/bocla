@@ -5,6 +5,7 @@
 #include "hardware/clocks.h"
 
 // Your Modules
+#include "cfg.h"
 #include "audio.h"
 #include "buttons.h"
 #include "led.h"

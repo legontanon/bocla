@@ -56,7 +56,7 @@ ws2811_t *ws2811_bind(PIO pio, uint sm, uint pin, volatile uint32_t *color_ptr)
 }
 
 // Updates led_color using the ws2811_set API
-void ws2811_set_hsv(uint32_t *led_color, uint8_t h, uint8_t s, uint8_t v)
+void ws2811_set_hsv(volatile uint32_t *led_color, uint8_t h, uint8_t s, uint8_t v)
 {
     unsigned char region, remainder, p, q, t;
 
