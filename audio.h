@@ -93,7 +93,7 @@ void audio_set_underflow_trigger_level(size_t level);
  * @param max_chunks Maximum number of chunks to write to out_chunks (should be >= audio_queue_depth()).
  * @return The actual number of chunks written to out_chunks.
  */
-size_t audio_queue(audio_chunk_t *out_chunks, size_t max_chunks););
+size_t audio_queue(audio_chunk_t *out_chunks, size_t max_chunks);
 
 /**
  * @brief Get the current queue depth.
