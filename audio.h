@@ -101,7 +101,7 @@ size_t audio_queue(audio_chunk_t *out_chunks, size_t max_chunks);
  */
 inline static size_t audio_queue_depth(void)
 {
-    return audio_queue(NULL, 0); // Call with NULL to just get the count}
+    return audio_queue(NULL, 0); // Call with NULL to just get the count
 }
 
 /**
@@ -112,6 +112,6 @@ inline static size_t audio_queue_depth(void)
  * Note: This is not the raw pointer, but an index or identifier you can use to
  */
 
-const int32_t audio_is_playing(uint16_t **current_buffer);
+const int16_t *audio_is_playing(void);
 
 #endif

@@ -71,7 +71,7 @@ void init()
 
     // Audio (PIO0, SM0) - 48kHz
     // Note: Pin order in function is (DIN, BCLK). LRC is implied as BCLK+1.
-    audio_init(pio0, 0, PIN_I2S_DIN, PIN_I2S_BCLK, 48000);
+    audio_i2s_init(pio0, 0, PIN_I2S_DIN, PIN_I2S_BCLK, 48000);
 
     // Buttons (PIO1, SM1)
     buttons_init(pio1, 1, PIN_BTN_BASE);

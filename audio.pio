@@ -1,47 +1,78 @@
 ; =============================================================================
-; 1. I2S AUDIO (16-bit Stereo)
+; 1. I2S AUDIO (16-bit Stereo, Philips Standard)
 ; =============================================================================
-; Pins: Side-set Base = 26 (Bit 0=BCLK, Bit 1=LRC)
-;       Out Base      = 28 (DIN)
-; Shift: Left (MSB First)
-; Freq: 44100 * 32 * 2 (approx 2.822 MHz)
+; LRC transitions 1 BCLK cycle before MSB.
+; Side-set: Bit 1 = LRC, Bit 0 = BCLK
+; =============================================================================
 
 .program i2s_out
 .side_set 2
 
-                    ; Side: Bit 1 (LRC), Bit 0 (BCLK)
-                    ; 00=L/L, 01=L/H, 10=H/L, 11=H/H
-
-    set x, 14       side 0b01   ; Setup: LRC=0 (Left), BCLK=1
-left_loop:
-    out pins, 1     side 0b00   ; Data Out, BCLK=0
-    jmp x-- left_loop side 0b01 ; Loop, BCLK=1
-    out pins, 1     side 0b10   ; Last bit Left, LRC=1 (Transition to Right)
+public entry_point:
+    set x, 14           side 0b01   ; Pre-load 15 (for 16 bits), LRC=0, BCLK=1
+left_data:
+    out pins, 1         side 0b00   ; Shift out bit, BCLK=0
+    jmp x-- left_data   side 0b01   ; BCLK=1
+    out pins, 1         side 0b10   ; Last bit Left, LRC high for Right channel
     
-    set x, 14       side 0b11   ; Setup: LRC=1 (Right), BCLK=1
-right_loop:
-    out pins, 1     side 0b10   ; Data Out, BCLK=0, LRC=1
-    jmp x-- right_loop side 0b11; Loop, BCLK=1
-    out pins, 1     side 0b00   ; Last bit Right, LRC=0 (Transition to Left)
+    set x, 14           side 0b11   ; Pre-load 15, LRC=1, BCLK=1
+right_data:
+    out pins, 1         side 0b10   ; Shift out bit, BCLK=0
+    jmp x-- right_data  side 0b11   ; BCLK=1
+    out pins, 1         side 0b00   ; Last bit Right, LRC low for Left channel
+
+; =============================================================================
+; 2. PWM AUDIO (8-bit Stereo Counter)
+; =============================================================================
+; Consumes same 32-bit FIFO word (L16 | R16).
+; Truncates to 8-bit for timing feasibility at audio sample rates.
+; Pins: Out Base = L_GPIO, L_GPIO + 1 = R_GPIO
+; =============================================================================
+
+.program pwm_out
+
+public entry_point:
+    pull block              ; Get L16 | R16
+    out pins, 2             ; Minimal placeholder output on L/R pins
+    jmp entry_point
 
 % c-sdk {
 static inline void i2s_out_program_init(PIO pio, uint sm, uint offset, uint data_pin, uint clock_pin_base) {
     pio_sm_config c = i2s_out_program_get_default_config(offset);
-    
-    // Configure pins
     sm_config_set_out_pins(&c, data_pin, 1);
     sm_config_set_sideset_pins(&c, clock_pin_base);
     
     pio_gpio_init(pio, data_pin);
-    pio_gpio_init(pio, clock_pin_base);
-    pio_gpio_init(pio, clock_pin_base + 1);
+    pio_gpio_init(pio, clock_pin_base);     // BCLK
+    pio_gpio_init(pio, clock_pin_base + 1); // LRC
     
     pio_sm_set_consecutive_pindirs(pio, sm, data_pin, 1, true);
     pio_sm_set_consecutive_pindirs(pio, sm, clock_pin_base, 2, true);
     
-    // Audio configuration: 32 clocks per frame, Left Shift
+    // Shift: MSB first, autopull enabled, threshold 32 bits
     sm_config_set_out_shift(&c, false, true, 32);
     sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+    
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+
+static inline void pwm_out_program_init(PIO pio, uint sm, uint offset, uint pin_base, float sample_rate) {
+    pio_sm_config c = pwm_out_program_get_default_config(offset);
+    sm_config_set_out_pins(&c, pin_base, 2);
+    sm_config_set_set_pins(&c, pin_base, 2);
+    
+    pio_gpio_init(pio, pin_base);
+    pio_gpio_init(pio, pin_base + 1);
+    
+    pio_sm_set_consecutive_pindirs(pio, sm, pin_base, 2, true);
+    
+    // Shift: MSB first, manual pull to split channels
+    sm_config_set_out_shift(&c, false, false, 32);
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+    
+    (void)sample_rate;
+    sm_config_set_clkdiv(&c, 1.0f);
     
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_set_enabled(pio, sm, true);

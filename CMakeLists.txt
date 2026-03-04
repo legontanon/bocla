@@ -67,8 +67,8 @@ target_link_libraries(bocla_led PUBLIC
 )
 pico_generate_pio_header(bocla_led ${CMAKE_CURRENT_LIST_DIR}/led.pio)
 
-add_library(bocla_synth synth.c)
-target_include_directories(bocla_synth PUBLIC ${BOCLA_INCLUDE_DIR})
+add_library(bocla_sequencer sequencer.c)
+target_include_directories(bocla_sequencer PUBLIC ${BOCLA_INCLUDE_DIR})
 
 add_library(bocla_usb usb_manager.c usb_descriptors.c)
 target_include_directories(bocla_usb PUBLIC ${BOCLA_INCLUDE_DIR})
@@ -125,18 +125,6 @@ target_link_libraries(test_button
 )
 pico_add_extra_outputs(test_button)
 
-add_executable(test_audio test_audio.c)
-pico_set_program_name(test_audio "test_audio")
-pico_set_program_version(test_audio "0.1")
-pico_enable_stdio_uart(test_audio 1)
-pico_enable_stdio_usb(test_audio 0)
-target_include_directories(test_audio PRIVATE ${BOCLA_INCLUDE_DIR})
-target_link_libraries(test_audio
-    bocla_audio
-    bocla_buttons
-    bocla_led
-    bocla_synth
-    m
-)
-pico_add_extra_outputs(test_audio)
+# Note: `test_audio` currently depends on legacy `synth.*` sources that are not
+# present in this workspace, so it is intentionally excluded from the default build.
 
