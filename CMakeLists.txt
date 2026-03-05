@@ -67,8 +67,11 @@ target_link_libraries(bocla_led PUBLIC
 )
 pico_generate_pio_header(bocla_led ${CMAKE_CURRENT_LIST_DIR}/led.pio)
 
-add_library(bocla_sequencer sequencer.c)
-target_include_directories(bocla_sequencer PUBLIC ${BOCLA_INCLUDE_DIR})
+add_library(bocla_fm_sequencer fm_sequencer.c)
+target_include_directories(bocla_fm_sequencer PUBLIC ${BOCLA_INCLUDE_DIR})
+
+add_library(bocla_mixer mixer.c)
+target_include_directories(bocla_mixer PUBLIC ${BOCLA_INCLUDE_DIR})
 
 add_library(bocla_usb usb_manager.c usb_descriptors.c)
 target_include_directories(bocla_usb PUBLIC ${BOCLA_INCLUDE_DIR})

@@ -1,12 +1,6 @@
 #ifndef FM_SEQUENCER_H
 #define FM_SEQUENCER_H
 
-#include "cfg.h"
-
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
-
 #include "fm_synth.h"
 
 #define FM_SEQ_MAX_TRACKS 16
@@ -14,18 +8,19 @@
 #define FM_SEQ_MAX_VOICES 32
 
 /**
- * @brief A single sequencer step
+ * @brief A single sequencer step definition
  */
 typedef struct
 {
-    uint8_t note;     // MIDI note number (0 = rest)
+    uint8_t note;     // MIDI note number (0 is rest)
     uint8_t velocity; // 0-127
     uint8_t gate;     // 0-100 (% of step duration)
+    uint8_t intensity; // 0-127 for additional modulation control
     bool active;      // Step trigger flag
 } fm_seq_step_t;
 
 /**
- * @brief A single track
+ * @brief A single track definition
  */
 typedef struct
 {
@@ -37,15 +32,14 @@ typedef struct
 } fm_seq_track_t;
 
 /**
- * @brief Global Sequencer State
+ * @brief Global Sequencer definition
  */
 typedef struct
 {
+    fm_synth_t* synth;
     fm_seq_track_t tracks[FM_SEQ_MAX_TRACKS];
-    fm_voice_runtime_t *voices[FM_SEQ_MAX_VOICES]; // Array of pointers to your static voice pool
 
     uint16_t bpm;
-    uint32_t sample_rate;
 
     /* Timing Logic (Fixed Point 16.16) */
     uint32_t tick_accumulator;
@@ -56,12 +50,24 @@ typedef struct
     uint16_t ppqn;
 
     bool playing;
+} fm_sequencer_cfg_t;
+
+
+typedef struct {
+    fm_sequencer_cfg_t cfg;
+    fm_voice_runtime_t *active_voices;
+    fm_voice_runtime_t *inactive_voices;
 } fm_sequencer_t;
 
-void fm_seq_init(fm_sequencer_t *seq, uint32_t sample_rate, uint16_t ppqn);
+
+fm_sequencer_t* fm_seq_init(fm_sequencer_cfg_t *seq_cfg, fm_synth_t *synth, uint16_t bpm, uint16_t ppqn);
 void fm_seq_set_bpm(fm_sequencer_t *seq, uint16_t bpm);
-void fm_seq_process_block(fm_sequencer_t *seq, int16_t *buffer, uint16_t num_samples);
-void fm_seq_sync_logic(fm_sequencer_t *seq);
-fm_voice_runtime_t *fm_seq_allocate_voice(fm_sequencer_t *seq, const fm_voice_config_t *patch);
+bool fm_seq_set_step(fm_sequencer_t *seq, uint8_t track_index, uint8_t step_index, const fm_seq_step_t *step);
+
+void fm_seq_play(fm_sequencer_t *seq);
+void fm_seq_pause(fm_sequencer_t *seq);
+void fm_seq_stop(fm_sequencer_t *seq);
+
+size_t fm_seq_process_block(fm_sequencer_t *seq, int16_t *buffer, uint16_t num_samples);
 
 #endif // FM_SEQUENCER_H
