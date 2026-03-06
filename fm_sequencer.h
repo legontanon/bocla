@@ -12,11 +12,12 @@
  */
 typedef struct
 {
-    uint8_t note;     // MIDI note number (0 is rest)
-    uint8_t velocity; // 0-127
-    uint8_t gate;     // 0-100 (% of step duration)
-    uint8_t intensity; // 0-127 for additional modulation control
-    bool active;      // Step trigger flag
+    uint8_t note;            // MIDI note number (0 is rest)
+    uint8_t velocity;        // 0-127
+    uint8_t gate;            // 0-100 (% of step duration)
+    uint8_t intensity;       // 0-127 for additional modulation control
+    uint16_t duration_ticks; // Duration of the note in ticks (for sequencer use), or 0 for infinite until note off.
+    bool active;             // Step trigger flag
 } fm_seq_step_t;
 
 /**
@@ -36,7 +37,7 @@ typedef struct
  */
 typedef struct
 {
-    fm_synth_t* synth;
+    fm_synth_t *synth;
     fm_seq_track_t tracks[FM_SEQ_MAX_TRACKS];
 
     uint16_t bpm;
@@ -47,20 +48,19 @@ typedef struct
 
     uint32_t current_tick;
     uint16_t current_step;
-    uint16_t ppqn;
+    uint16_t ppqn; // Pulses Per Quarter Note
 
     bool playing;
 } fm_sequencer_cfg_t;
 
-
-typedef struct {
+typedef struct
+{
     fm_sequencer_cfg_t cfg;
     fm_voice_runtime_t *active_voices;
     fm_voice_runtime_t *inactive_voices;
 } fm_sequencer_t;
 
-
-fm_sequencer_t* fm_seq_init(fm_sequencer_cfg_t *seq_cfg, fm_synth_t *synth, uint16_t bpm, uint16_t ppqn);
+fm_sequencer_t *fm_seq_init(fm_sequencer_cfg_t *seq_cfg, fm_synth_t *synth, uint16_t bpm, uint16_t ppqn);
 void fm_seq_set_bpm(fm_sequencer_t *seq, uint16_t bpm);
 bool fm_seq_set_step(fm_sequencer_t *seq, uint8_t track_index, uint8_t step_index, const fm_seq_step_t *step);
 

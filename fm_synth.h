@@ -13,7 +13,7 @@
  * Waveform: Quarter-sine lookup (1024 entries = 4096 full cycle).
  */
 #ifndef FM_SINE_QUARTER_SIZE
-#define FM_SINE_QUARTER_SIZE 1024
+#error "FM_SINE_QUARTER_SIZE must be defined in cfg.h to specify the resolution of the sine table."
 #endif
 
 #ifndef FM_PHASE_SHIFT
@@ -27,7 +27,6 @@
 #ifndef FM_MAX_VOICES
 #define FM_MAX_VOICES 32
 #endif
-
 
 typedef enum
 {
@@ -75,11 +74,11 @@ typedef struct
     fm_operator_config_t ops[FM_OPS_PER_VOICE];
 } fm_voice_config_t;
 
-typedef struct 
+typedef struct
 {
     uint32_t sampling_rate;
     uint32_t tick_rate;
-    
+
     fm_voice_config_t *patches;
     size_t num_patches;
 } fm_synth_cfg_t;
@@ -89,7 +88,8 @@ typedef struct
  */
 typedef struct _fm_voice_runtime fm_voice_runtime_t;
 
-struct _fm_voice_runtime {
+struct _fm_voice_runtime
+{
     const fm_voice_config_t *patch;
 
     uint32_t base_freq;
@@ -107,7 +107,6 @@ struct _fm_voice_runtime {
     fm_voice_runtime_t *next; // for use in active and inactive voice linked lists
 };
 
-
 typedef struct
 {
     fm_synth_cfg_t cfg;
@@ -117,31 +116,44 @@ typedef struct
 extern const int16_t fm_sine_table[FM_SINE_QUARTER_SIZE];
 
 /**
+ * @brief Initialize the FM synthesizer with configuration.
+ *
+ * @param cfg Pointer to synth configuration structure (will be filled by init).
+ * @param sampling_rate Sample rate in Hz (typically 48000).
+ * @param num_patches Number of voice patches available.
+ * @param patches Array of voice configuration patches.
+ * @return Pointer to initialized fm_synth_t, or NULL on failure.
+ */
+fm_synth_t *fm_synth_init(fm_synth_cfg_t *cfg, uint32_t sampling_rate, size_t num_patches, fm_voice_config_t *patches);
+
+/**
  * @brief Core Synthesis Functions
  */
 
- /**
-  * @brief Trigger a note on a voice with the given patch, frequency, and velocity.
-  * 
-  * @param synth The synthesizer instance.
-  * @param voice_index The index of the voice to trigger (0 to FM_MAX_VOICES-1).
-  * @param patch_idx The index of the patch to use (0 to num_patches-1).
-  * @param freq The base frequency in Hz (will be converted to phase increment).
-  * @param velocity The MIDI velocity (0-127) to determine volume.
-  */
-void fm_synth_note_on(fm_synth_t *synth, uint8_t voice_index, uint8_t patch_idx, uint32_t freq, uint8_t velocity, uint8_t intensity);
+/**
+ * @brief Trigger a note on a voice with the given patch, frequency, and velocity.
+ *
+ * @param synth The synthesizer instance.
+ * @param voice_index The index of the voice to trigger (0 to FM_MAX_VOICES-1).
+ * @param patch_idx The index of the patch to use (0 to num_patches-1).
+ * @param freq The base frequency in Hz (will be converted to phase increment).
+ * @param velocity The MIDI velocity (0-127) to determine volume.
+ * @param intensity An additional parameter (0-127) that can be used for modulation depth or other purposes defined by the patch.
+ * @param duration_ticks The duration of the note in ticks (for sequencer use), or 0 for infinite until note off.
+ */
+void fm_synth_note_on(fm_synth_t *synth, uint8_t voice_index, uint8_t patch_idx, uint32_t freq, uint8_t velocity, uint8_t intensity, uint16_t duration_ticks);
 
 /**
  * @brief Trigger a note off (release) on the given voice.
- * 
+ *
  * @param synth The synthesizer instance.
- */
+ * @param voice_index The index of the voice to release (0 to FM_MAX_VOICES-1).
 void fm_synth_note_off(fm_synth_t *synth, uint8_t voice_index);
 
 
 /**
  * @brief Get the index of an idle voice.
- * 
+ *
  * @param synth The synthesizer instance.
  * @return The index of an idle voice, or -1 if none are available.
  */
@@ -150,11 +162,11 @@ int8_t fm_synth_get_idle_voice_index(fm_synth_t *synth);
 /**
  * @brief Render a block of audio samples for the given voice.
  * This should be called repeatedly until all voices become inactive.
- * 
+ *
  * @param synth The synthesizer instance.
  * @param buffer Output buffer to fill with audio samples (interleaved if stereo).
  * @param num_samples The number of samples to render in this block.
- * 
+ *
  * @return The number of samples unrendered if all voices became inactive during this block, or 0 if fully rendered.
  */
 size_t fm_synth_render_block(fm_synth_t *synth, int16_t *buffer, uint16_t num_samples);

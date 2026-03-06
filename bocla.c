@@ -8,6 +8,7 @@
 #include "cfg.h"
 #include "audio.h"
 #include "buttons.h"
+#include "fm_sequencer.h"
 #include "led.h"
 #include "usb_manager.h"
 
@@ -23,6 +24,9 @@
 
 // --- Globals ---
 volatile uint32_t status_color = 0; // 0x00RRGGBB
+static fm_sequencer_cfg_t fm_seq_cfg = {0};
+static fm_sequencer_t *fm_seq = NULL;
+static int16_t fm_seq_probe_sample = 0;
 
 // --- Callbacks ---
 
@@ -92,6 +96,10 @@ void init()
     // 4. USB Init
     usb_manager_init();
 
+    // 5. FM Sequencer init (minimal runtime path)
+    fm_seq = fm_seq_init(&fm_seq_cfg, NULL, 120, 24);
+    fm_seq_play(fm_seq);
+
     // Update LED to Green to indicate "Ready for Host"
     status_color = 0x00002000;
 }
@@ -116,6 +124,10 @@ int main()
     while (1)
     {
         usb_manager_task();
+        if (fm_seq)
+        {
+            (void)fm_seq_process_block(fm_seq, &fm_seq_probe_sample, 1);
+        }
         // Optional: Add a low-power sleep here if desired
         // sleep_ms(10);
     }

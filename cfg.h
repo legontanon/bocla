@@ -39,6 +39,10 @@
 #define AUDIO_DMA_CHANNEL 0
 
 // Synth Config
+#define FM_SINE_QUARTER_SIZE 1024 // 1024 entries for full 4096 step cycle (12-bit phase resolution)
+#define FM_PHASE_SHIFT 20
+#define FM_OPS_PER_VOICE 4
+#define FM_MAX_VOICES 32
 
 // LED Config
 #define LED_COUNT 1

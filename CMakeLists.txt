@@ -67,11 +67,35 @@ target_link_libraries(bocla_led PUBLIC
 )
 pico_generate_pio_header(bocla_led ${CMAKE_CURRENT_LIST_DIR}/led.pio)
 
+# FM Synthesizer sine table generation
+set(FM_SINE_TABLE_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fm_sine_quarter.inc")
+add_custom_command(
+    OUTPUT ${FM_SINE_TABLE_OUTPUT}
+    COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_LIST_DIR}/gen_fm_sine_table.cmake"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    COMMENT "Generating FM sine lookup table..."
+    VERBATIM
+)
+
+add_custom_target(gen_fm_sine_table ALL DEPENDS ${FM_SINE_TABLE_OUTPUT})
+
+# FM Synthesizer library (depends on sine table)
+add_library(bocla_fm_synth fm_synth.c)
+target_include_directories(bocla_fm_synth PUBLIC ${BOCLA_INCLUDE_DIR})
+target_include_directories(bocla_fm_synth PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(bocla_fm_synth PUBLIC m)  # Link math library for powf, etc.
+add_dependencies(bocla_fm_synth gen_fm_sine_table)
+
 add_library(bocla_fm_sequencer fm_sequencer.c)
 target_include_directories(bocla_fm_sequencer PUBLIC ${BOCLA_INCLUDE_DIR})
+target_include_directories(bocla_fm_sequencer PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(bocla_fm_sequencer PUBLIC bocla_fm_synth)
 
 add_library(bocla_mixer mixer.c)
 target_include_directories(bocla_mixer PUBLIC ${BOCLA_INCLUDE_DIR})
+
+add_library(bocla_filter filter.c)
+target_include_directories(bocla_filter PUBLIC ${BOCLA_INCLUDE_DIR})
 
 add_library(bocla_usb usb_manager.c usb_descriptors.c)
 target_include_directories(bocla_usb PUBLIC ${BOCLA_INCLUDE_DIR})
@@ -98,6 +122,7 @@ target_link_libraries(bocla
     bocla_audio
     bocla_buttons
     bocla_led
+    bocla_fm_sequencer
     bocla_usb
     pico_multicore
 )
