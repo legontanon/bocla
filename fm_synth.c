@@ -144,6 +144,12 @@ static inline int16_t process_operator(fm_operator_runtime_t *rt, const fm_opera
     return out;
 }
 
+/**
+ * @brief Get the index of an idle voice.
+ *
+ * @param synth The synthesizer instance.
+ * @return The index of an idle voice, or -1 if none are available.
+ */
 int8_t fm_synth_get_idle_voice_index(fm_synth_t *synth)
 {
     for (uint8_t i = 0; i < FM_MAX_VOICES; i++)
