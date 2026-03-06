@@ -8,6 +8,7 @@
 #include "cfg.h"
 #include "audio.h"
 #include "buttons.h"
+#include "bach.h"
 #include "fm_sequencer.h"
 #include "led.h"
 #include "usb_manager.h"
@@ -98,6 +99,7 @@ void init()
 
     // 5. FM Sequencer init (minimal runtime path)
     fm_seq = fm_seq_init(&fm_seq_cfg, NULL, 120, 24);
+    fm_seq_load_bach_chords(fm_seq);
     fm_seq_play(fm_seq);
 
     // Update LED to Green to indicate "Ready for Host"
