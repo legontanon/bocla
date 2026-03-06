@@ -4,7 +4,7 @@
 #include "fm_synth.h"
 
 #define FM_SEQ_MAX_TRACKS 16
-#define FM_SEQ_PATTERN_LEN 64
+#define FM_SEQ_DEFAULT_LOOP_LEN 64
 #define FM_SEQ_MAX_VOICES 32
 
 /**
@@ -21,12 +21,23 @@ typedef struct
 } fm_seq_step_t;
 
 /**
+ * @brief Sequencer note event mapped to a timeline step index
+ */
+typedef struct
+{
+    uint32_t step_index;
+    fm_seq_step_t step;
+} fm_seq_event_t;
+
+/**
  * @brief A single track definition
  */
 typedef struct
 {
     const fm_voice_config_t *patch;
-    fm_seq_step_t steps[FM_SEQ_PATTERN_LEN];
+    fm_seq_event_t *events;
+    size_t event_count;
+    size_t event_capacity;
     uint8_t channel_volume;
     uint8_t voice_mask;
     bool muted;
@@ -47,7 +58,8 @@ typedef struct
     uint32_t ticks_per_sample;
 
     uint32_t current_tick;
-    uint16_t current_step;
+    uint32_t current_step;
+    uint32_t loop_length_steps;
     uint16_t ppqn; // Pulses Per Quarter Note
 
     bool playing;
@@ -62,7 +74,15 @@ typedef struct
 
 fm_sequencer_t *fm_seq_init(fm_sequencer_cfg_t *seq_cfg, fm_synth_t *synth, uint16_t bpm, uint16_t ppqn);
 void fm_seq_set_bpm(fm_sequencer_t *seq, uint16_t bpm);
-bool fm_seq_set_step(fm_sequencer_t *seq, uint8_t track_index, uint8_t step_index, const fm_seq_step_t *step);
+void fm_seq_set_loop_length(fm_sequencer_t *seq, uint32_t loop_length_steps);
+bool fm_seq_set_step(fm_sequencer_t *seq, uint8_t track_index, uint32_t step_index, const fm_seq_step_t *step);
+
+/*
+ * Real-time note:
+ * - While playing, fm_seq_set_step will NOT grow memory capacity.
+ * - If capacity is exhausted, it returns false instead of reallocating.
+ */
+void fm_seq_clear_track(fm_sequencer_t *seq, uint8_t track_index);
 
 void fm_seq_play(fm_sequencer_t *seq);
 void fm_seq_pause(fm_sequencer_t *seq);

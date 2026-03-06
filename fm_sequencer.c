@@ -2,6 +2,7 @@
 #include "fm_synth.h"
 
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 static fm_sequencer_t g_fm_sequencer;
@@ -30,20 +31,87 @@ static uint8_t clamp_u8(uint8_t value, uint8_t min_value, uint8_t max_value)
     return value;
 }
 
+static bool ensure_event_capacity(fm_seq_track_t *track, size_t required_count)
+{
+    if (!track)
+        return false;
+
+    if (track->event_capacity >= required_count)
+        return true;
+
+    size_t new_capacity = (track->event_capacity == 0) ? 8 : track->event_capacity;
+    while (new_capacity < required_count)
+    {
+        new_capacity *= 2;
+    }
+
+    fm_seq_event_t *new_events = (fm_seq_event_t *)realloc(track->events, new_capacity * sizeof(fm_seq_event_t));
+    if (!new_events)
+        return false;
+
+    track->events = new_events;
+    track->event_capacity = new_capacity;
+    return true;
+}
+
+static size_t lower_bound_event_index(const fm_seq_track_t *track, uint32_t step_index)
+{
+    size_t left = 0;
+    size_t right = track ? track->event_count : 0;
+
+    while (left < right)
+    {
+        size_t mid = left + ((right - left) / 2);
+        if (track->events[mid].step_index < step_index)
+        {
+            left = mid + 1;
+        }
+        else
+        {
+            right = mid;
+        }
+    }
+
+    return left;
+}
+
+static uint8_t resolve_patch_index(const fm_sequencer_t *seq, const fm_seq_track_t *track, uint8_t track_index)
+{
+    if (!seq || !seq->cfg.synth || seq->cfg.synth->cfg.num_patches == 0)
+        return 0;
+
+    if (track && track->patch)
+    {
+        for (size_t i = 0; i < seq->cfg.synth->cfg.num_patches; ++i)
+        {
+            if (&seq->cfg.synth->cfg.patches[i] == track->patch)
+                return (uint8_t)i;
+        }
+    }
+
+    return (uint8_t)(track_index % seq->cfg.synth->cfg.num_patches);
+}
+
 fm_sequencer_t *fm_seq_init(fm_sequencer_cfg_t *seq_cfg, fm_synth_t *synth, uint16_t bpm, uint16_t ppqn)
 {
     fm_sequencer_t *seq = &g_fm_sequencer;
 
-    if (!seq_cfg)
+    for (uint8_t track = 0; track < FM_SEQ_MAX_TRACKS; ++track)
     {
-        memset(&seq->cfg, 0, sizeof(seq->cfg));
-    }
-    else
-    {
-        seq->cfg = *seq_cfg;
+        free(seq->cfg.tracks[track].events);
+        seq->cfg.tracks[track].events = NULL;
     }
 
+    memset(seq, 0, sizeof(*seq));
+
     seq->cfg.synth = synth;
+    seq->cfg.loop_length_steps = FM_SEQ_DEFAULT_LOOP_LEN;
+
+    if (seq_cfg && seq_cfg->loop_length_steps > 0)
+    {
+        seq->cfg.loop_length_steps = seq_cfg->loop_length_steps;
+    }
+
     seq->cfg.bpm = bpm;
     seq->cfg.ppqn = ppqn;
 
@@ -76,15 +144,9 @@ fm_sequencer_t *fm_seq_init(fm_sequencer_cfg_t *seq_cfg, fm_synth_t *synth, uint
         seq->cfg.tracks[track].channel_volume = 255;
         seq->cfg.tracks[track].voice_mask = 0xFF; // All voices enabled by default
         seq->cfg.tracks[track].muted = false;
-        for (uint8_t step = 0; step < FM_SEQ_PATTERN_LEN; ++step)
-        {
-            seq->cfg.tracks[track].steps[step].note = 0;
-            seq->cfg.tracks[track].steps[step].velocity = 0;
-            seq->cfg.tracks[track].steps[step].gate = 0;
-            seq->cfg.tracks[track].steps[step].intensity = 0;
-            seq->cfg.tracks[track].steps[step].duration_ticks = 0;
-            seq->cfg.tracks[track].steps[step].active = false;
-        }
+        seq->cfg.tracks[track].events = NULL;
+        seq->cfg.tracks[track].event_count = 0;
+        seq->cfg.tracks[track].event_capacity = 0;
     }
 
     return seq;
@@ -131,20 +193,89 @@ void fm_seq_stop(fm_sequencer_t *seq)
     }
 }
 
-bool fm_seq_set_step(fm_sequencer_t *seq, uint8_t track_index, uint8_t step_index, const fm_seq_step_t *step)
+bool fm_seq_set_step(fm_sequencer_t *seq, uint8_t track_index, uint32_t step_index, const fm_seq_step_t *step)
 {
-    if (!seq || !step || track_index >= FM_SEQ_MAX_TRACKS || step_index >= FM_SEQ_PATTERN_LEN)
+    if (!seq || !step || track_index >= FM_SEQ_MAX_TRACKS)
         return false;
 
     fm_seq_track_t *track = &seq->cfg.tracks[track_index];
-    track->steps[step_index].note = step->note;
-    track->steps[step_index].velocity = clamp_u8(step->velocity, 0, 127);
-    track->steps[step_index].gate = clamp_u8(step->gate, 0, 100);
-    track->steps[step_index].intensity = clamp_u8(step->intensity, 0, 127);
-    track->steps[step_index].duration_ticks = step->duration_ticks;
-    track->steps[step_index].active = step->active;
+
+    size_t insert_idx = lower_bound_event_index(track, step_index);
+    bool exists = (insert_idx < track->event_count && track->events[insert_idx].step_index == step_index);
+
+    if (exists)
+    {
+        if (!step->active)
+        {
+            memmove(&track->events[insert_idx],
+                    &track->events[insert_idx + 1],
+                    (track->event_count - insert_idx - 1) * sizeof(fm_seq_event_t));
+            track->event_count--;
+            return true;
+        }
+
+        track->events[insert_idx].step.note = step->note;
+        track->events[insert_idx].step.velocity = clamp_u8(step->velocity, 0, 127);
+        track->events[insert_idx].step.gate = clamp_u8(step->gate, 0, 100);
+        track->events[insert_idx].step.intensity = clamp_u8(step->intensity, 0, 127);
+        track->events[insert_idx].step.duration_ticks = step->duration_ticks;
+        track->events[insert_idx].step.active = true;
+        return true;
+    }
+
+    if (!step->active)
+        return true;
+
+    // Real-time safety: never grow allocations while sequencer is playing.
+    // This prevents malloc/realloc activity from edit calls during audio rendering.
+    if (seq->cfg.playing && track->event_count >= track->event_capacity)
+        return false;
+
+    if (!ensure_event_capacity(track, track->event_count + 1))
+        return false;
+
+    if (insert_idx < track->event_count)
+    {
+        memmove(&track->events[insert_idx + 1],
+                &track->events[insert_idx],
+                (track->event_count - insert_idx) * sizeof(fm_seq_event_t));
+    }
+
+    fm_seq_event_t *event = &track->events[insert_idx];
+    track->event_count++;
+    event->step_index = step_index;
+    event->step.note = step->note;
+    event->step.velocity = clamp_u8(step->velocity, 0, 127);
+    event->step.gate = clamp_u8(step->gate, 0, 100);
+    event->step.intensity = clamp_u8(step->intensity, 0, 127);
+    event->step.duration_ticks = step->duration_ticks;
+    event->step.active = true;
 
     return true;
+}
+
+void fm_seq_set_loop_length(fm_sequencer_t *seq, uint32_t loop_length_steps)
+{
+    if (!seq)
+        return;
+
+    seq->cfg.loop_length_steps = (loop_length_steps == 0) ? FM_SEQ_DEFAULT_LOOP_LEN : loop_length_steps;
+    if (seq->cfg.current_step >= seq->cfg.loop_length_steps)
+    {
+        seq->cfg.current_step %= seq->cfg.loop_length_steps;
+    }
+}
+
+void fm_seq_clear_track(fm_sequencer_t *seq, uint8_t track_index)
+{
+    if (!seq || track_index >= FM_SEQ_MAX_TRACKS)
+        return;
+
+    fm_seq_track_t *track = &seq->cfg.tracks[track_index];
+    free(track->events);
+    track->events = NULL;
+    track->event_count = 0;
+    track->event_capacity = 0;
 }
 
 size_t fm_seq_process_block(fm_sequencer_t *seq, int16_t *buffer, uint16_t num_samples)
@@ -160,10 +291,6 @@ size_t fm_seq_process_block(fm_sequencer_t *seq, int16_t *buffer, uint16_t num_s
 
     uint16_t samples_rendered = 0;
 
-    // For now: render silence and advance sequencer state
-    // TODO: When fm_synth backend is implemented, integrate voice allocation and rendering
-    memset(buffer, 0, num_samples * sizeof(int16_t));
-
     // Sub-block rendering: Interleave sample generation with sequencer ticks
     while (samples_rendered < num_samples)
     {
@@ -177,6 +304,7 @@ size_t fm_seq_process_block(fm_sequencer_t *seq, int16_t *buffer, uint16_t num_s
 
         if (chunk > 0)
         {
+            (void)fm_synth_render_block(seq->cfg.synth, buffer + samples_rendered, chunk);
             samples_rendered += chunk;
             seq->cfg.tick_accumulator += chunk;
         }
@@ -186,12 +314,81 @@ size_t fm_seq_process_block(fm_sequencer_t *seq, int16_t *buffer, uint16_t num_s
         {
             seq->cfg.tick_accumulator = 0; // Reset for next tick
 
+            // Process note offs by decrementing per-voice tick counters.
+            for (uint8_t i = 0; i < FM_MAX_VOICES; ++i)
+            {
+                fm_voice_runtime_t *voice = &seq->cfg.synth->voices[i];
+                if (!voice->active || voice->tick_counter == 0)
+                    continue;
+
+                voice->tick_counter--;
+                if (voice->tick_counter == 0)
+                {
+                    fm_synth_note_off(seq->cfg.synth, i);
+                }
+            }
+
+            // Trigger note events at each step boundary.
+            if (seq->cfg.current_tick == 0)
+            {
+                for (uint8_t t = 0; t < FM_SEQ_MAX_TRACKS; ++t)
+                {
+                    fm_seq_track_t *track = &seq->cfg.tracks[t];
+                    if (track->muted || track->event_count == 0)
+                        continue;
+
+                    size_t start_idx = lower_bound_event_index(track, seq->cfg.current_step);
+                    for (size_t e = start_idx; e < track->event_count; ++e)
+                    {
+                        fm_seq_event_t *event = &track->events[e];
+                        if (event->step_index != seq->cfg.current_step)
+                            break;
+
+                        fm_seq_step_t *step = &event->step;
+                        if (!step->active || step->note == 0)
+                            continue;
+
+                        int8_t voice_index = fm_synth_get_idle_voice_index(seq->cfg.synth);
+                        if (voice_index < 0)
+                            continue;
+
+                        uint8_t patch_index = resolve_patch_index(seq, track, t);
+                        uint32_t freq = g_midi_freq_table[step->note & 0x7F];
+
+                        fm_synth_note_on(seq->cfg.synth,
+                                         (uint8_t)voice_index,
+                                         patch_index,
+                                         freq,
+                                         step->velocity,
+                                         step->intensity,
+                                         step->duration_ticks);
+
+                        if (step->duration_ticks > 0)
+                        {
+                            uint32_t active_ticks = step->duration_ticks;
+                            if (step->gate > 0 && step->gate <= 100)
+                            {
+                                active_ticks = (active_ticks * step->gate) / 100;
+                            }
+                            seq->cfg.synth->voices[(uint8_t)voice_index].tick_counter = (active_ticks > 0) ? active_ticks : 1;
+                        }
+                        else
+                        {
+                            // 0 duration means sustain until explicit note-off.
+                            seq->cfg.synth->voices[(uint8_t)voice_index].tick_counter = 0;
+                        }
+                    }
+                }
+            }
+
             // Advance ticks and steps
             seq->cfg.current_tick++;
             if (seq->cfg.current_tick >= seq->cfg.ppqn)
             {
                 seq->cfg.current_tick = 0;
-                seq->cfg.current_step = (seq->cfg.current_step + 1) % FM_SEQ_PATTERN_LEN;
+
+                uint32_t loop_len = (seq->cfg.loop_length_steps == 0) ? FM_SEQ_DEFAULT_LOOP_LEN : seq->cfg.loop_length_steps;
+                seq->cfg.current_step = (seq->cfg.current_step + 1) % loop_len;
             }
         }
     }

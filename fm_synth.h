@@ -148,8 +148,8 @@ void fm_synth_note_on(fm_synth_t *synth, uint8_t voice_index, uint8_t patch_idx,
  *
  * @param synth The synthesizer instance.
  * @param voice_index The index of the voice to release (0 to FM_MAX_VOICES-1).
+ */
 void fm_synth_note_off(fm_synth_t *synth, uint8_t voice_index);
-
 
 /**
  * @brief Get the index of an idle voice.

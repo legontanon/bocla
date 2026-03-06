@@ -4,12 +4,14 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define FM_SCRATCH_X_ATTR __attribute__((section(".scratch_x.fm_sine")))
+
 /**
  * @brief Pre-computed sine table for quarter wave (0 to pi/2).
  * Resolution: 1024 entries covering 0° to 90°.
  * Maps to 16-bit signed values (±32767).
  */
-const int16_t fm_sine_table[FM_SINE_QUARTER_SIZE] = {
+const int16_t FM_SCRATCH_X_ATTR fm_sine_table[FM_SINE_QUARTER_SIZE] = {
 #include "fm_sine_quarter.inc"
 };
 
