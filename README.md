@@ -4,3 +4,5 @@ Bocla is an App for PICO microcontrollers to create an USB/BT/MIDI audio device.
 - Audio input from USB or BLE
 - Basic audio filters
 - Real Time Audio synthesis using its own fM synth (and sequencer).
+- MIDI control support
+- Low-latency audio processing
