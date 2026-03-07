@@ -3,8 +3,6 @@
 #include "pico/time.h"
 #include "led.h"
 
-#define PIN_LED 21
-
 volatile uint32_t led_color = 0;
 
 int main()
@@ -12,7 +10,7 @@ int main()
     stdio_init_all();
 
     // Init WS2811 on Pin 21
-    if (!ws2811_bind(pio1, 0, PIN_LED, &led_color))
+    if (!ws2811_bind(pio1, 0, LED_PIN, &led_color))
     {
         printf("Failed to bind WS2811\n");
         return 1;

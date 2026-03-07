@@ -166,6 +166,7 @@ pico_enable_stdio_uart(test_bach 1)
 pico_enable_stdio_usb(test_bach 0)
 target_include_directories(test_bach PRIVATE ${BOCLA_INCLUDE_DIR})
 target_link_libraries(test_bach
+    bocla_audio
     bocla_fm_synth
     bocla_fm_sequencer
     bocla_led

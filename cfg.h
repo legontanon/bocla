@@ -45,7 +45,13 @@
 #define FM_MAX_VOICES 32
 
 // LED Config
+#define LED_PIN 21
 #define LED_COUNT 1
 #define LED_BRIGHTNESS 50 // 0-255
+
+// Audio Config
+#define PIN_I2S_BCLK 26
+#define PIN_I2S_LRC 27
+#define PIN_I2S_DIN 28
 
 #endif // CFG_H

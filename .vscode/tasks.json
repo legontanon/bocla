@@ -252,9 +252,11 @@
         {
             "label": "Monitor UART (Debug Probe)",
             "type": "process",
-            "command": "screen",
+            "command": "/usr/bin/minicom",
             "args": [
+                "-D",
                 "/dev/ttyACM0",
+                "-b",
                 "115200"
             ],
             "presentation": {
