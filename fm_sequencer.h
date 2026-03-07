@@ -1,3 +1,21 @@
+/**
+ * Bocla - fm_sequencer.h
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
+/**
+ * @file fm_sequencer.h
+ * @brief Header for the FM Sequencer module of the Bocla Synthesizer.
+ * This module provides a step sequencer that can be used to trigger
+ * notes on the FM synthesizer. It supports multiple tracks, each
+ * with its own set of steps, and it can be configured with different
+ * BPM and PPQN settings. The sequencer is designed to be efficient and
+ * suitable for real-time audio processing on a microcontroller.
+ * The sequencer uses a fixed-point timing system to manage the
+ * scheduling of note events,
+ */
+
 #ifndef FM_SEQUENCER_H
 #define FM_SEQUENCER_H
 

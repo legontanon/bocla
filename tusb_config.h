@@ -1,8 +1,15 @@
+/**
+ * Bocla - tusb_config.h
+ * TinyUSB configuration for the RP2040-based Bocla synthesizer.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
 #ifndef TUSB_CONFIG_H_
 #define TUSB_CONFIG_H_
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #ifndef CFG_TUSB_MCU

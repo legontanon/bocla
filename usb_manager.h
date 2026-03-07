@@ -1,3 +1,9 @@
+/**
+ * Bocla - usb_manager.h
+ * USB management for the Bocla synthesizer using TinyUSB.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
 #ifndef USB_MANAGER_H
 #define USB_MANAGER_H
 

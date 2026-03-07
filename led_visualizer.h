@@ -1,3 +1,9 @@
+/**
+ * Bocla - led_visualizer.h
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
 #ifndef LED_VISUALIZER_H
 #define LED_VISUALIZER_H
 

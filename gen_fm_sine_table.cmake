@@ -1,5 +1,8 @@
-# CMake script to generate FM sine table
-# This is called during build and generates fm_sine_quarter.inc
+# Bocla - gen_fm_sine_table.cmake
+# (c) 2024 Luis Enrique Garcia Ontanon
+# CMake script to generate FM sine table during build
+# This script is invoked by CMake during the build process to generate a sine lookup table for
+# the FM synthesizer. It uses a Python script to create the table based on parameters defined in cfg.h.
 
 find_program(PYTHON3_EXECUTABLE python3)
 if(NOT PYTHON3_EXECUTABLE)

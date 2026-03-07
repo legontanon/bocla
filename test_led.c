@@ -1,3 +1,10 @@
+/**
+ * Bocla - test_led.c
+ * Simple LED driver test cycling through hues.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "pico/time.h"

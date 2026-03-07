@@ -1,3 +1,9 @@
+/**
+ * Bocla - led.c
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
 #include "led.h"
 #include "pico/stdlib.h"
 #include "hardware/pio.h"

@@ -1,3 +1,10 @@
+/**
+ * Bocla - test_audio.c
+ * Simple audio driver test with a sweeping oscillator and button controls.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
 #include <stdio.h>
 #include <math.h>
 #include "pico/stdlib.h"

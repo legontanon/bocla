@@ -1,3 +1,9 @@
+/**
+ * Bocla - fm_synth.c
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
 #include "fm_synth.h"
 
 #include <string.h>

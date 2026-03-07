@@ -1,3 +1,18 @@
+/**
+ * Bocla - mixer.h
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
+/**
+ * @file mixer.h
+ * @brief Header for the audio mixer module of the Bocla Synthesizer.
+ * This module provides a simple multi-channel audio mixer that can be used to combine
+ * multiple audio sources (e.g., synthesizer voices, sequencer tracks) into a single output buffer.
+ * The mixer supports up to MIXER_MAX_CHANNELS channels, each with its own input callback and gain control. The mixer processes audio in blocks, and it is designed to be efficient and suitable for real-time audio processing on a microcontroller. The mixer does not perform any
+ * advanced features like panning or effects, but it provides a basic framework for combining audio sources with individual gain control.
+ */
+
 #ifndef MIXER_H
 #define MIXER_H
 

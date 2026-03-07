@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# Bocla - gen_fm_sine_table.py
+# (c) 2024 Luis Enrique Garcia Ontanon
+# See LICENSE.txt for license details.
+
 """
 Generate FM synthesizer quarter-sine lookup table.
 

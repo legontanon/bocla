@@ -1,3 +1,10 @@
+/**
+ * Bocla - test_button.c
+ * Test program for buttons and LED integration.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "buttons.h"

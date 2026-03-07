@@ -1,3 +1,27 @@
+/**
+ * Bocla - fm_synth.h
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
+/**
+ * @brief Fixed-point FM Synthesizer Header
+ * This file defines the core data structures and function prototypes for
+ * the FM synthesizer module of the Bocla Synthesizer project.
+ * The synthesizer is designed to be efficient and suitable for
+ * real-time audio processing on a microcontroller, using fixed-point
+ * arithmetic and pre-computed sine tables to minimize CPU load.
+ * The synthesizer supports up to FM_MAX_VOICES simultaneous voices,
+ * each with its own patch configuration that defines the algorithm
+ * and operator parameters.
+ * The main functions include initialization, note on/off handling,
+ * and audio block rendering. The synthesizer is designed to be used
+ * in conjunction with the sequencer module, which will trigger
+ * notes based on a timeline. But anyway it can also be used in
+ * a more traditional way by directly calling the note on/off
+ * functions.
+ */
+
 #ifndef FM_SYNTH_H
 #define FM_SYNTH_H
 
@@ -7,11 +31,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-/**
- * @brief Fixed-point FM Synthesizer Header
- * Precision: 16-bit signed output.
- * Waveform: Quarter-sine lookup (1024 entries = 4096 full cycle).
- */
 #ifndef FM_SINE_QUARTER_SIZE
 #error "FM_SINE_QUARTER_SIZE must be defined in cfg.h to specify the resolution of the sine table."
 #endif

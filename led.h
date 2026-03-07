@@ -1,3 +1,27 @@
+/**
+ * Bocla - led.h
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
+/**
+ * @file led.h
+ * @brief Header for WS2811 LED driver using PIO on the Raspberry Pi Pico
+ * This driver allows you to control a WS2811 LED strip by writing a 32-bit
+ * color value to a volatile memory location. The driver handles the timing and protocol
+ * using a PIO state machine and a repeating timer to refresh the LED state.
+ * The color format is 0x00RRGGBB, where the most significant byte is ignored,
+ * and the next three bytes represent the red, green, and blue channels respectively.
+ * The driver includes helper functions to set the LED color using RGB or HSV values, and to increment/decrement color channels with saturation.
+ * To use the driver, you need to call ws2811_bind() with the appropriate
+ * PIO instance, state machine index, GPIO pin, and a pointer to a volatile uint32_t variable that will hold the color value. The driver will then continuously read from this variable and update the LED accordingly.
+ * You can use the provided helper functions to manipulate the color value in a thread-safe
+ * manner.
+ * Note: The driver is designed to be simple and efficient, but it does not include advanced features
+ * like brightness control or color correction. It is intended for use in projects where you want
+ * a simple visual indicator or effect based on the state of your synthesizer or sequencer.
+ */
+
 #ifndef WS2811_H
 #define WS2811_H
 

@@ -1,3 +1,10 @@
+/**
+ * Bocla - patches.h
+ * Predefined FM synth patches for testing and demonstration.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
 #ifndef FM_PATCHES_H
 #define FM_PATCHES_H
 

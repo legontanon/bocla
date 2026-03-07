@@ -1,3 +1,22 @@
+/**
+ * Bocla Synthesizer - filter.h
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
+/**
+ * @file filter.h
+ * @brief Header for audio filters used in the Bocla Synthesizer.
+ * This file defines the filter configuration and state structures, as well as the function prototypes for
+ * initializing filters and processing audio blocks through various filter types (SVF, 1-pole LPF, DC Blocker, Unskew ASRC).
+ * The filter_state_t structure is designed to be flexible, allowing for different filter types and
+ * configurations via a union in the filter_config_t structure. Each filter type has its own processing function,
+ * and the main filter processing function will dispatch to the appropriate one based on the filter type
+ * specified in the configuration. The unskew ASRC implementation uses linear interpolation to
+ * resample audio blocks, and it relies on an external callback to provide input samples.
+ * This allows it to be used as a simple anti-aliasing filter or for sample rate conversion
+ * in a pinch.
+ */
 #ifndef FILTER_H
 #define FILTER_H
 

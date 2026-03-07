@@ -1,11 +1,18 @@
+/**
+ * Bocla - usb_descriptors.c
+ * USB descriptor definitions for the Bocla synthesizer.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
 #include "tusb.h"
 #include "class/hid/hid.h"
 
-#define USB_VID           0x2E8A
-#define USB_PID           0x000A
-#define USB_BCD           0x0100
+#define USB_VID 0x2E8A
+#define USB_PID 0x000A
+#define USB_BCD 0x0100
 
-#define DESC_STR_MAX      32
+#define DESC_STR_MAX 32
 
 static tusb_desc_device_t const desc_device = {
     .bLength = sizeof(tusb_desc_device_t),
@@ -21,14 +28,15 @@ static tusb_desc_device_t const desc_device = {
     .iManufacturer = 0x01,
     .iProduct = 0x02,
     .iSerialNumber = 0x03,
-    .bNumConfigurations = 0x01
-};
+    .bNumConfigurations = 0x01};
 
-uint8_t const *tud_descriptor_device_cb(void) {
+uint8_t const *tud_descriptor_device_cb(void)
+{
     return (uint8_t const *)&desc_device;
 }
 
-enum {
+enum
+{
     ITF_NUM_TOTAL = 0,
     CONFIG_TOTAL_LEN = TUD_CONFIG_DESC_LEN,
 };
@@ -37,7 +45,8 @@ uint8_t const desc_configuration[] = {
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 100),
 };
 
-uint8_t const *tud_descriptor_configuration_cb(uint8_t index) {
+uint8_t const *tud_descriptor_configuration_cb(uint8_t index)
+{
     (void)index;
     return desc_configuration;
 }
@@ -51,22 +60,28 @@ static const char *string_desc_arr[] = {
 
 static uint16_t _desc_str[DESC_STR_MAX];
 
-uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
+uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
+{
     (void)langid;
 
     uint8_t chr_count;
 
-    if (index == 0) {
+    if (index == 0)
+    {
         _desc_str[1] = 0x0409;
         chr_count = 1;
-    } else {
-        if (index >= (sizeof(string_desc_arr) / sizeof(string_desc_arr[0]))) {
+    }
+    else
+    {
+        if (index >= (sizeof(string_desc_arr) / sizeof(string_desc_arr[0])))
+        {
             return NULL;
         }
 
         const char *str = string_desc_arr[index];
         chr_count = 0;
-        while (str[chr_count] != '\0' && chr_count < (DESC_STR_MAX - 1)) {
+        while (str[chr_count] != '\0' && chr_count < (DESC_STR_MAX - 1))
+        {
             _desc_str[1 + chr_count] = str[chr_count];
             chr_count++;
         }
@@ -76,13 +91,15 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     return _desc_str;
 }
 
-uint8_t const *tud_hid_descriptor_report_cb(uint8_t instance) {
+uint8_t const *tud_hid_descriptor_report_cb(uint8_t instance)
+{
     (void)instance;
     return NULL;
 }
 
 uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type,
-                               uint8_t *buffer, uint16_t reqlen) {
+                               uint8_t *buffer, uint16_t reqlen)
+{
     (void)instance;
     (void)report_id;
     (void)report_type;
@@ -92,7 +109,8 @@ uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_t
 }
 
 void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type,
-                           uint8_t const *buffer, uint16_t bufsize) {
+                           uint8_t const *buffer, uint16_t bufsize)
+{
     (void)instance;
     (void)report_id;
     (void)report_type;

@@ -1,3 +1,9 @@
+/**
+ * Bocla - fm_sequencer.c
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
 #include "fm_sequencer.h"
 #include "fm_synth.h"
 

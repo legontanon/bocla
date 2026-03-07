@@ -1,3 +1,6 @@
+; Bocla - led.pio
+; (c) 2026, Luis Enrique Garcia Ontanon
+; See LICENCE.txt for details 
 
 ; =============================================================================
 ; 3. WS2811 LED

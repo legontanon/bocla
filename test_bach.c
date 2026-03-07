@@ -1,4 +1,16 @@
 /**
+ * Bocla - test_bach.c
+ * Test file for Bach Toccata sequence in the FM Sequencer.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ *
+ * It will start playing and update the LED visualizer based on the active
+ * voices in the synthesizer.
+ * The sequence is loaded from fm_bach.h and uses the toccata organ patch
+ * defined there.
+ */
+
+/**
  * @file test_bach.c
  * @brief Test file for Bach Toccata sequence in the FM Sequencer.
  *
