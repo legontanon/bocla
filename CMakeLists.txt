@@ -153,6 +153,20 @@ target_link_libraries(test_button
 )
 pico_add_extra_outputs(test_button)
 
+add_executable(test_bach test_bach.c)
+pico_set_program_name(test_bach "test_bach")
+pico_set_program_version(test_bach "0.1")
+pico_enable_stdio_uart(test_bach 1)
+pico_enable_stdio_usb(test_bach 0)
+target_include_directories(test_bach PRIVATE ${BOCLA_INCLUDE_DIR})
+target_link_libraries(test_bach
+    bocla_fm_synth
+    bocla_fm_sequencer
+    bocla_led
+    pico_stdlib
+)
+pico_add_extra_outputs(test_bach)
+
 # Note: `test_audio` currently depends on legacy `synth.*` sources that are not
 # present in this workspace, so it is intentionally excluded from the default build.
 

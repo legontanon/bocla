@@ -97,6 +97,138 @@
             "windows": {
                 "command": "${env:USERPROFILE}/.pico-sdk/openocd/0.12.0+dev/openocd.exe",
             }
+        },
+        {
+            "label": "Build bocla",
+            "type": "process",
+            "command": "${userHome}/.pico-sdk/ninja/v1.12.1/ninja",
+            "args": ["-C", "${workspaceFolder}/build", "bocla"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": "$gcc",
+            "windows": {
+                "command": "${env:USERPROFILE}/.pico-sdk/ninja/v1.12.1/ninja.exe"
+            }
+        },
+        {
+            "label": "Build test_led",
+            "type": "process",
+            "command": "${userHome}/.pico-sdk/ninja/v1.12.1/ninja",
+            "args": ["-C", "${workspaceFolder}/build", "test_led"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": "$gcc",
+            "windows": {
+                "command": "${env:USERPROFILE}/.pico-sdk/ninja/v1.12.1/ninja.exe"
+            }
+        },
+        {
+            "label": "Build test_button",
+            "type": "process",
+            "command": "${userHome}/.pico-sdk/ninja/v1.12.1/ninja",
+            "args": ["-C", "${workspaceFolder}/build", "test_button"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": "$gcc",
+            "windows": {
+                "command": "${env:USERPROFILE}/.pico-sdk/ninja/v1.12.1/ninja.exe"
+            }
+        },
+        {
+            "label": "Build test_bach",
+            "type": "process",
+            "command": "${userHome}/.pico-sdk/ninja/v1.12.1/ninja",
+            "args": ["-C", "${workspaceFolder}/build", "test_bach"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": "$gcc",
+            "windows": {
+                "command": "${env:USERPROFILE}/.pico-sdk/ninja/v1.12.1/ninja.exe"
+            }
+        },
+        {
+            "label": "Run bocla",
+            "type": "process",
+            "command": "${env:HOME}/.pico-sdk/picotool/2.2.0-a4/picotool/picotool",
+            "args": [
+                "load",
+                "${workspaceFolder}/build/bocla.elf",
+                "-fx"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": [],
+            "windows": {
+                "command": "${env:USERPROFILE}/.pico-sdk/picotool/2.2.0-a4/picotool/picotool.exe"
+            }
+        },
+        {
+            "label": "Run test_led",
+            "type": "process",
+            "command": "${env:HOME}/.pico-sdk/picotool/2.2.0-a4/picotool/picotool",
+            "args": [
+                "load",
+                "${workspaceFolder}/build/test_led.elf",
+                "-fx"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": [],
+            "windows": {
+                "command": "${env:USERPROFILE}/.pico-sdk/picotool/2.2.0-a4/picotool/picotool.exe"
+            }
+        },
+        {
+            "label": "Run test_button",
+            "type": "process",
+            "command": "${env:HOME}/.pico-sdk/picotool/2.2.0-a4/picotool/picotool",
+            "args": [
+                "load",
+                "${workspaceFolder}/build/test_button.elf",
+                "-fx"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": [],
+            "windows": {
+                "command": "${env:USERPROFILE}/.pico-sdk/picotool/2.2.0-a4/picotool/picotool.exe"
+            }
+        },
+        {
+            "label": "Run test_bach",
+            "type": "process",
+            "command": "${env:HOME}/.pico-sdk/picotool/2.2.0-a4/picotool/picotool",
+            "args": [
+                "load",
+                "${workspaceFolder}/build/test_bach.elf",
+                "-fx"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": [],
+            "windows": {
+                "command": "${env:USERPROFILE}/.pico-sdk/picotool/2.2.0-a4/picotool/picotool.exe"
+            }
         }
     ]
 }

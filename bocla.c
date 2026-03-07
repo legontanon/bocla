@@ -11,6 +11,7 @@
 #include "bach.h"
 #include "fm_sequencer.h"
 #include "led.h"
+#include "led_visualizer.h"
 #include "usb_manager.h"
 
 // --- Hardware Config ---
@@ -129,6 +130,7 @@ int main()
         if (fm_seq)
         {
             (void)fm_seq_process_block(fm_seq, &fm_seq_probe_sample, 1);
+            led_visualizer_update(fm_seq->cfg.synth, &status_color);
         }
         // Optional: Add a low-power sleep here if desired
         // sleep_ms(10);

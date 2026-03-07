@@ -19,6 +19,24 @@ typedef struct
     struct repeating_timer timer;
 } ws2811_t;
 
+enum
+{
+    LED_COLOR_RED = 0x00FF0000,
+    LED_COLOR_GREEN = 0x0000FF00,
+    LED_COLOR_BLUE = 0x000000FF,
+    LED_COLOR_MAGENTA = 0x00FF00FF,
+    LED_COLOR_CYAN = 0x0000FFFF,
+    LED_COLOR_YELLOW = 0x00FFFF00,
+    LED_COLOR_WHITE = 0x00FFFFFF,
+
+    LED_COLOR_IDLE = 0x00050010,    // Dim Blue/Purple
+    LED_COLOR_READY = 0x00002000,   // Green
+    LED_COLOR_CHORD = 0x00FF8000,   // Amber/Orange
+    LED_COLOR_TRILL = 0x0000FF80,   // Cyan
+    LED_COLOR_WAITING = 0x00000020, // Blue
+    LED_COLOR_ERROR = 0x00FF0000,   // Red
+} led_colors_t;
+
 /**
  * @brief Initialize the LED watcher.
  * This sets up the PIO state machine and starts a watchdog timer to refresh the LED.
