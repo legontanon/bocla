@@ -248,6 +248,20 @@
             "windows": {
                 "command": "${env:USERPROFILE}/.pico-sdk/picotool/2.2.0-a4/picotool/picotool.exe"
             }
+        },
+        {
+            "label": "Monitor UART (Debug Probe)",
+            "type": "process",
+            "command": "screen",
+            "args": [
+                "/dev/ttyACM0",
+                "115200"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": []
         }
     ]
 }

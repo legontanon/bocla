@@ -33,6 +33,12 @@ project(bocla C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
+# Force UART console to UART0 on GP0/GP1
+add_compile_definitions(
+    PICO_DEFAULT_UART_TX_PIN=0
+    PICO_DEFAULT_UART_RX_PIN=1
+)
+
 # Shared include paths
 set(BOCLA_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
@@ -114,7 +120,7 @@ add_executable(bocla
 
 pico_set_program_name(bocla "bocla")
 pico_set_program_version(bocla "0.1")
-pico_enable_stdio_uart(bocla 0)
+pico_enable_stdio_uart(bocla 1)
 pico_enable_stdio_usb(bocla 0)
 
 target_include_directories(bocla PRIVATE ${BOCLA_INCLUDE_DIR})

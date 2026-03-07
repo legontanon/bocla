@@ -19,7 +19,7 @@ typedef struct
     struct repeating_timer timer;
 } ws2811_t;
 
-enum
+typedef enum
 {
     LED_COLOR_RED = 0x00FF0000,
     LED_COLOR_GREEN = 0x0000FF00,
