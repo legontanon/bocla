@@ -1,3 +1,11 @@
+/**
+ * Bocla - bocla.c
+ * Main entry point for the Bocla synthesizer firmware.
+ * Initializes hardware, sets up the FM sequencer, and manages the main loop.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "pico/multicore.h"

@@ -1,3 +1,9 @@
+/**
+ * Bocla - bach.h
+ * Predefined patches and sequences inspired by J.S. Bach's organ works.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
 #ifndef FM_BACH_H
 #define FM_BACH_H
 

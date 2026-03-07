@@ -1,3 +1,20 @@
+/**
+ * Bocla - audio.h
+ * Audio output subsystem for the Bocla synthesizer.
+ * Supports I2S and PWM audio output using RP2040 PIO and DMA.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
+/**
+ * @file audio.h
+ * @brief Audio output subsystem for the Bocla synthesizer.
+ * Supports I2S and PWM audio output using RP2040 PIO and DMA.
+ * Provides a simple API for enqueuing audio buffers for playback and handling underflow events
+ *
+ * The audio subsystem is designed to be efficient and suitable for real-time audio processing on a microcontroller. It uses a queue-based system to manage audio buffers, allowing the main application to enqueue audio data without blocking. The subsystem handles the low-level details of configuring the PIO for I2S or PWM output, setting up DMA transfers, and managing buffer underflows.
+ * The API includes functions for initializing the audio output, enqueuing audio buffers, and
+ */
 #ifndef AUDIO_H
 #define AUDIO_H
 

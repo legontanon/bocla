@@ -1,3 +1,9 @@
+; Bocla - audio.h
+; Audio output subsystem for the Bocla synthesizer.
+; Supports I2S and PWM audio output using RP2040 PIO and DMA.
+; (c) 2024 Luis Enrique Garcia Ontanon
+; See LICENSE.txt for license details.
+
 ; =============================================================================
 ; 1. I2S AUDIO (16-bit Stereo, Philips Standard)
 ; =============================================================================

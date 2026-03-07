@@ -1,3 +1,9 @@
+; Bocla - buttons.pio
+; Button input driver.
+; (c) 2024 Luis Enrique Garcia Ontanon
+; See LICENSE.txt for license details.
+
+
 ; =============================================================================
 ; 2. BUTTON DEBOUNCE (Parallel 8-bit)
 ; =============================================================================

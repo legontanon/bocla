@@ -1,3 +1,16 @@
+/**
+ * Bocla - buttons.h
+ * Button management for the Bocla synthesizer using RP2040's PIO for debouncing and chord detection.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
+
+/**
+ * @file buttons.h
+ * @brief Button management for the Bocla synthesizer using RP2040's PIO for debouncing and chord detection.
+ * This module provides an interface to initialize a set of 5 buttons connected to contiguous GPIO pins, and to register callbacks for specific button combinations (chords). The implementation uses a PIO state machine to efficiently scan the button states and debounce them, while an alarm-based timer is used to define a "chord window" during which multiple button presses are accumulated into a single bitmask. When the chord window expires, the registered callback for the resulting button combination is invoked. This allows for complex interactions with just 5 physical buttons, enabling up to 32 unique combinations.
+ */
+
 #ifndef BUTTONS_H
 #define BUTTONS_H
 

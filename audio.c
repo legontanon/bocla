@@ -1,3 +1,10 @@
+/**
+ * Bocla - audio.c
+ * Audio output driver for the Bocla synthesizer on RP2040.
+ * Supports both PWM and I2S output using PIO and DMA.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
 #include "audio.h"
 #include "pico/stdlib.h"
 #include "hardware/dma.h"

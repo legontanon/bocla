@@ -1,10 +1,9 @@
-/*
-* ble_manager.h
-*
-* This file contains the declarations for the BLE manager functions.
-* The BLE manager handles initialization, advertising, connection events,
-* and characteristic write events.
-*/
+/**
+ * Bocla - ble_manager.c
+ * Bluetooth Low Energy management for the Bocla synthesizer.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
 
 #ifndef BLE_MANAGER_H
 #define BLE_MANAGER_H

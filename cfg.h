@@ -1,4 +1,10 @@
-// cfg.h
+/**
+ * Bocla - cfg.h
+ * Configuration header for the Bocla synthesizer firmware.
+ * Contains USB descriptors, audio settings, FM synthesis parameters, and LED configuration.
+ * (c) 2024 Luis Enrique Garcia Ontanon
+ * See LICENSE.txt for license details.
+ */
 
 #ifndef CFG_H
 #define CFG_H

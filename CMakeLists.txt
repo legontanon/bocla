@@ -1,3 +1,9 @@
+# Bocla - CMakeLists.txt
+# (c) 2024 Luis Enrique Garcia Ontanon
+# CMake configuration for the Bocla synthesizer firmware project
+# This CMakeLists.txt file sets up the build configuration for the Bocla synthesizer firmware
+# It defines the project structure, dependencies, and custom build steps for generating the FM sine table.
+
 # Generated CMake Pico project file
 
 cmake_minimum_required(VERSION 3.13)
