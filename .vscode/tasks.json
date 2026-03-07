@@ -6,7 +6,10 @@
             "type": "process",
             "isBuildCommand": true,
             "command": "${userHome}/.pico-sdk/ninja/v1.12.1/ninja",
-            "args": ["-C", "${workspaceFolder}/build"],
+            "args": [
+                "-C",
+                "${workspaceFolder}/build"
+            ],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -102,7 +105,11 @@
             "label": "Build bocla",
             "type": "process",
             "command": "${userHome}/.pico-sdk/ninja/v1.12.1/ninja",
-            "args": ["-C", "${workspaceFolder}/build", "bocla"],
+            "args": [
+                "-C",
+                "${workspaceFolder}/build",
+                "bocla"
+            ],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -117,7 +124,11 @@
             "label": "Build test_led",
             "type": "process",
             "command": "${userHome}/.pico-sdk/ninja/v1.12.1/ninja",
-            "args": ["-C", "${workspaceFolder}/build", "test_led"],
+            "args": [
+                "-C",
+                "${workspaceFolder}/build",
+                "test_led"
+            ],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -132,7 +143,11 @@
             "label": "Build test_button",
             "type": "process",
             "command": "${userHome}/.pico-sdk/ninja/v1.12.1/ninja",
-            "args": ["-C", "${workspaceFolder}/build", "test_button"],
+            "args": [
+                "-C",
+                "${workspaceFolder}/build",
+                "test_button"
+            ],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -147,7 +162,11 @@
             "label": "Build test_bach",
             "type": "process",
             "command": "${userHome}/.pico-sdk/ninja/v1.12.1/ninja",
-            "args": ["-C", "${workspaceFolder}/build", "test_bach"],
+            "args": [
+                "-C",
+                "${workspaceFolder}/build",
+                "test_bach"
+            ],
             "group": "build",
             "presentation": {
                 "reveal": "always",
