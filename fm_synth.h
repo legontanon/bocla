@@ -47,6 +47,18 @@
 #define FM_MAX_VOICES 32
 #endif
 
+#ifndef FM_LFO_RATE_HZ
+#define FM_LFO_RATE_HZ 5
+#endif
+
+#ifndef FM_LFO_MAX_VIBRATO_CENTS
+#define FM_LFO_MAX_VIBRATO_CENTS 35
+#endif
+
+#ifndef FM_LFO_MAX_TREMOLO_PERCENT
+#define FM_LFO_MAX_TREMOLO_PERCENT 35
+#endif
+
 typedef enum
 {
     FM_ENV_IDLE,
@@ -82,6 +94,13 @@ typedef struct
     int16_t last_out[2]; // Feedback history
 } fm_operator_runtime_t;
 
+typedef struct
+{
+    uint32_t phase;
+    uint32_t phase_inc;
+    int16_t value;
+} fm_lfo_runtime_t;
+
 /**
  * @brief Patch definition (Strict 4-Op to avoid FAM pointer math)
  */
@@ -89,6 +108,8 @@ typedef struct
 {
     uint8_t algorithm;
     uint8_t lfo_depth;
+    uint8_t lfo_depth_pitch;
+    uint8_t lfo_depth_amp;
     uint8_t n_ops;
     fm_operator_config_t ops[FM_OPS_PER_VOICE];
 } fm_voice_config_t;
@@ -120,6 +141,7 @@ struct _fm_voice_runtime
     uint16_t samples_until_tick;
     int16_t *out_ptr;
 
+    fm_lfo_runtime_t lfo_state;
     uint8_t n_ops;
     fm_operator_runtime_t op_state[FM_OPS_PER_VOICE];
 

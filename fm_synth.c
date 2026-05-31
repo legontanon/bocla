@@ -45,6 +45,9 @@ fm_synth_t *fm_synth_init(fm_synth_cfg_t *cfg, uint32_t sampling_rate, size_t nu
     {
         synth->voices[i].active = 0;
         synth->voices[i].patch = NULL;
+        synth->voices[i].lfo_state.phase = 0;
+        synth->voices[i].lfo_state.phase_inc = 0;
+        synth->voices[i].lfo_state.value = 0;
         for (uint8_t j = 0; j < FM_OPS_PER_VOICE; j++)
         {
             synth->voices[i].op_state[j].env_state = FM_ENV_IDLE;
@@ -73,6 +76,39 @@ static inline int16_t lookup_sine(uint32_t phase)
 
     int16_t val = fm_sine_table[idx];
     return (quadrant & 2) ? -val : val;
+}
+
+static inline int32_t calc_vibrato_depth_q15(uint8_t lfo_depth)
+{
+    if (lfo_depth == 0)
+        return 0;
+
+    const int32_t max_vibrato_q15 = (int32_t)FM_LFO_MAX_VIBRATO_CENTS * 19;
+    return (int32_t)(((int64_t)lfo_depth * lfo_depth * max_vibrato_q15 + 32512) / 65025);
+}
+
+static inline int32_t calc_tremolo_depth_q15(uint8_t lfo_depth)
+{
+    if (lfo_depth == 0)
+        return 0;
+
+    const int32_t max_tremolo_q15 = ((int32_t)FM_LFO_MAX_TREMOLO_PERCENT * 32767) / 100;
+    return (int32_t)(((int64_t)lfo_depth * lfo_depth * max_tremolo_q15 + 32512) / 65025);
+}
+
+static inline void resolve_lfo_depths(const fm_voice_config_t *patch, uint8_t *pitch_depth, uint8_t *amp_depth)
+{
+    uint8_t pd = patch->lfo_depth_pitch;
+    uint8_t ad = patch->lfo_depth_amp;
+
+    if (pd == 0 && ad == 0)
+    {
+        pd = patch->lfo_depth;
+        ad = patch->lfo_depth;
+    }
+
+    *pitch_depth = pd;
+    *amp_depth = ad;
 }
 
 /**
@@ -123,7 +159,7 @@ static inline int32_t process_envelope(fm_operator_runtime_t *rt, const fm_opera
 /**
  * @brief Process a single FM operator
  */
-static inline int16_t process_operator(fm_operator_runtime_t *rt, const fm_operator_config_t *cfg, int32_t modulation)
+static inline int16_t process_operator(fm_operator_runtime_t *rt, const fm_operator_config_t *cfg, int32_t modulation, int32_t phase_inc_mod)
 {
     if (rt->env_state == FM_ENV_IDLE)
         return 0;
@@ -138,7 +174,10 @@ static inline int16_t process_operator(fm_operator_runtime_t *rt, const fm_opera
     }
 
     int16_t osc_out = lookup_sine(rt->phase + phase_mod);
-    rt->phase += rt->phase_inc;
+    int64_t phase_step = (int64_t)(int32_t)rt->phase_inc + phase_inc_mod;
+    if (phase_step < 0)
+        phase_step = 0;
+    rt->phase += (uint32_t)phase_step;
 
     // Apply envelope amplitude (Fixed point 16-bit * 16-bit -> 32-bit >> 16)
     int16_t out = (int16_t)(((int32_t)osc_out * env_amp) >> 16);
@@ -179,6 +218,9 @@ void fm_synth_note_on(fm_synth_t *synth, uint8_t voice_index, uint8_t patch_idx,
     voice->velocity = velocity;
     voice->active = 1;
     voice->n_ops = patch->n_ops;
+    voice->lfo_state.phase = 0;
+    voice->lfo_state.value = 0;
+    voice->lfo_state.phase_inc = (uint32_t)(((uint64_t)FM_LFO_RATE_HZ << 32) / synth->cfg.sampling_rate);
 
     // Calculate base phase increment: (freq * 2^32) / sample_rate
     // Using 64-bit math to prevent overflow during setup. This is fine since it's outside the render loop.
@@ -230,10 +272,25 @@ size_t fm_synth_render_block(fm_synth_t *synth, int16_t *buffer, uint16_t num_sa
         active_voices_count++;
         const fm_voice_config_t *patch = voice->patch;
         bool voice_still_alive = false;
+        uint8_t lfo_depth_pitch = 0;
+        uint8_t lfo_depth_amp = 0;
+        resolve_lfo_depths(patch, &lfo_depth_pitch, &lfo_depth_amp);
+        const int32_t vibrato_depth_q15 = calc_vibrato_depth_q15(lfo_depth_pitch);
+        const int32_t tremolo_depth_q15 = calc_tremolo_depth_q15(lfo_depth_amp);
 
         for (uint16_t s = 0; s < num_samples; s++)
         {
             int16_t op_out[FM_OPS_PER_VOICE] = {0};
+            voice->lfo_state.value = lookup_sine(voice->lfo_state.phase);
+            voice->lfo_state.phase += voice->lfo_state.phase_inc;
+            int32_t op_lfo_phase_mod[FM_OPS_PER_VOICE] = {0};
+            if (vibrato_depth_q15 > 0)
+            {
+                for (uint8_t i = 0; i < voice->n_ops; i++)
+                {
+                    op_lfo_phase_mod[i] = (int32_t)(((int64_t)voice->op_state[i].phase_inc * voice->lfo_state.value * vibrato_depth_q15) >> 30);
+                }
+            }
 
             // Depending on the algorithm, wire the operators.
             // Phase modulation needs to be shifted up to match the 32-bit phase space.
@@ -241,31 +298,38 @@ size_t fm_synth_render_block(fm_synth_t *synth, int16_t *buffer, uint16_t num_sa
             switch (patch->algorithm)
             {
             case 0: // Series (4 -> 3 -> 2 -> 1)
-                op_out[3] = process_operator(&voice->op_state[3], &patch->ops[3], 0);
-                op_out[2] = process_operator(&voice->op_state[2], &patch->ops[2], ((int32_t)op_out[3]) << (FM_PHASE_SHIFT - 4));
-                op_out[1] = process_operator(&voice->op_state[1], &patch->ops[1], ((int32_t)op_out[2]) << (FM_PHASE_SHIFT - 4));
-                op_out[0] = process_operator(&voice->op_state[0], &patch->ops[0], ((int32_t)op_out[1]) << (FM_PHASE_SHIFT - 4));
+                op_out[3] = process_operator(&voice->op_state[3], &patch->ops[3], 0, op_lfo_phase_mod[3]);
+                op_out[2] = process_operator(&voice->op_state[2], &patch->ops[2], ((int32_t)op_out[3]) << (FM_PHASE_SHIFT - 4), op_lfo_phase_mod[2]);
+                op_out[1] = process_operator(&voice->op_state[1], &patch->ops[1], ((int32_t)op_out[2]) << (FM_PHASE_SHIFT - 4), op_lfo_phase_mod[1]);
+                op_out[0] = process_operator(&voice->op_state[0], &patch->ops[0], ((int32_t)op_out[1]) << (FM_PHASE_SHIFT - 4), op_lfo_phase_mod[0]);
                 break;
             case 4: // 2-carrier (2->1 + 4->3)
-                op_out[3] = process_operator(&voice->op_state[3], &patch->ops[3], 0);
-                op_out[2] = process_operator(&voice->op_state[2], &patch->ops[2], ((int32_t)op_out[3]) << (FM_PHASE_SHIFT - 4));
-                op_out[1] = process_operator(&voice->op_state[1], &patch->ops[1], 0);
-                op_out[0] = process_operator(&voice->op_state[0], &patch->ops[0], ((int32_t)op_out[1]) << (FM_PHASE_SHIFT - 4));
+                op_out[3] = process_operator(&voice->op_state[3], &patch->ops[3], 0, op_lfo_phase_mod[3]);
+                op_out[2] = process_operator(&voice->op_state[2], &patch->ops[2], ((int32_t)op_out[3]) << (FM_PHASE_SHIFT - 4), op_lfo_phase_mod[2]);
+                op_out[1] = process_operator(&voice->op_state[1], &patch->ops[1], 0, op_lfo_phase_mod[1]);
+                op_out[0] = process_operator(&voice->op_state[0], &patch->ops[0], ((int32_t)op_out[1]) << (FM_PHASE_SHIFT - 4), op_lfo_phase_mod[0]);
                 op_out[0] = (op_out[0] >> 1) + (op_out[2] >> 1);
                 break;
             case 7: // Parallel (1 + 2 + 3 + 4)
             default:
-                op_out[0] = process_operator(&voice->op_state[0], &patch->ops[0], 0);
-                op_out[1] = process_operator(&voice->op_state[1], &patch->ops[1], 0);
-                op_out[2] = process_operator(&voice->op_state[2], &patch->ops[2], 0);
-                op_out[3] = process_operator(&voice->op_state[3], &patch->ops[3], 0);
+                op_out[0] = process_operator(&voice->op_state[0], &patch->ops[0], 0, op_lfo_phase_mod[0]);
+                op_out[1] = process_operator(&voice->op_state[1], &patch->ops[1], 0, op_lfo_phase_mod[1]);
+                op_out[2] = process_operator(&voice->op_state[2], &patch->ops[2], 0, op_lfo_phase_mod[2]);
+                op_out[3] = process_operator(&voice->op_state[3], &patch->ops[3], 0, op_lfo_phase_mod[3]);
                 op_out[0] = (op_out[0] >> 2) + (op_out[1] >> 2) + (op_out[2] >> 2) + (op_out[3] >> 2);
                 break;
             }
 
             // Accumulate into main buffer
             // In a real application, you'd apply global velocity scaling and hard-clipping here.
-            int32_t mix = buffer[s] + ((op_out[0] * voice->velocity) >> 7);
+            int32_t carrier = op_out[0];
+            if (tremolo_depth_q15 > 0)
+            {
+                int32_t lfo_gain = (int32_t)(((int64_t)voice->lfo_state.value * tremolo_depth_q15) >> 15);
+                carrier = (carrier * (32767 + lfo_gain)) >> 15;
+            }
+
+            int32_t mix = buffer[s] + ((carrier * voice->velocity) >> 7);
 
             // Saturation clipper to avoid harsh wrap-around distortion
             if (mix > 32767)
