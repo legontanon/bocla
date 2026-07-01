@@ -4,17 +4,36 @@
 # This script is invoked by CMake during the build process to generate a sine lookup table for
 # the FM synthesizer. It uses a Python script to create the table based on parameters defined in cfg.h.
 
-find_program(PYTHON3_EXECUTABLE python3)
+# Get the script location from the source directory.
+set(SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
+find_program(PYTHON3_EXECUTABLE NAMES python3 python)
+set(PYTHON3_ARGS)
+
 if(NOT PYTHON3_EXECUTABLE)
-    find_program(PYTHON3_EXECUTABLE python)
+    # Windows commonly installs Python behind the py launcher.
+    find_program(PYTHON_LAUNCHER_EXECUTABLE NAMES py)
+    if(PYTHON_LAUNCHER_EXECUTABLE)
+        set(PYTHON3_EXECUTABLE "${PYTHON_LAUNCHER_EXECUTABLE}")
+        set(PYTHON3_ARGS -3)
+    endif()
 endif()
 
 if(NOT PYTHON3_EXECUTABLE)
+    if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/fm_sine_quarter.inc")
+        message(STATUS "Python3 not found; reusing existing fm_sine_quarter.inc")
+        return()
+    endif()
+
+    if(EXISTS "${SCRIPT_DIR}/fm_sine_quarter.inc")
+        file(COPY_FILE "${SCRIPT_DIR}/fm_sine_quarter.inc" "${CMAKE_CURRENT_BINARY_DIR}/fm_sine_quarter.inc")
+        message(STATUS "Python3 not found; copied fallback fm_sine_quarter.inc from source")
+        return()
+    endif()
+
     message(FATAL_ERROR "Python3 not found. Install Python 3 to generate sine tables.")
 endif()
 
-# Get the script location from the source directory
-set(SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 if(NOT EXISTS "${SCRIPT_DIR}/gen_fm_sine_table.py")
     message(FATAL_ERROR "gen_fm_sine_table.py not found in source directory")
 endif()
@@ -22,7 +41,7 @@ endif()
 # Run the Python script to generate the sine table
 # Pass source directory so it can read FM_SINE_QUARTER_SIZE from cfg.h
 execute_process(
-    COMMAND "${PYTHON3_EXECUTABLE}" "${SCRIPT_DIR}/gen_fm_sine_table.py" "fm_sine_quarter.inc" "${SCRIPT_DIR}"
+    COMMAND "${PYTHON3_EXECUTABLE}" ${PYTHON3_ARGS} "${SCRIPT_DIR}/gen_fm_sine_table.py" "fm_sine_quarter.inc" "${SCRIPT_DIR}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     RESULT_VARIABLE PYTHON_RESULT
     OUTPUT_VARIABLE PYTHON_OUTPUT
